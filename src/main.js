@@ -11,6 +11,8 @@ import { createLabyrinth } from './labyrinth.js'
 import { createPlayerController } from './playerController.js'
 import { createCameraRig } from './cameraRig.js'
 import { buildWorld } from './worldBuilder.js'
+import { createLights } from './lights.js'
+import { createMaterials } from './materials.js'
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -72,39 +74,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Labyrinth Data ---
   const labyrinth = createLabyrinth()
 
+  // --- Materials ---
+  const materials = createMaterials()
+
   // --- Build World ---
-  const world = buildWorld(labyrinth)
+  const world = buildWorld(labyrinth, materials)
   scene.add(world)
 
   // --- Lights ---
-  scene.add(new THREE.AmbientLight('#ffe8d0', 0.35))
-  scene.add(new THREE.HemisphereLight('#ffe7b3', '#8b4a00', 0.9))
-
-  const keyLight = new THREE.DirectionalLight('#ffe7c2', 1.4)
-  keyLight.position.set(28, 25, 15)
-  keyLight.target.position.set(14, 0, 7)
-  scene.add(keyLight, keyLight.target)
-
-  const cornerIntensity = 1.8
-  const cornerDistance = 90
-  const cornerDecay = 2
-
-  const corners = [
-    [-28, 12, -15],
-    [ 28, 12, -15],
-    [ 28, 12,  15],
-    [-28, 12,  15]
-  ]
-
-  corners.forEach(([x, y, z]) => {
-    const light = new THREE.PointLight('#f8d1b0', cornerIntensity, cornerDistance, cornerDecay)
-    light.position.set(x, y, z)
-    scene.add(light)
-  })
-
-  const spotlight = new THREE.SpotLight('#ffffff', 3.2, 18, 0.55, 0.5, 2)
-  spotlight.target = new THREE.Object3D()
-  scene.add(spotlight, spotlight.target)
+  const { group: lightsGroup, spotlight } = createLights()
+  scene.add(lightsGroup)
 
   // --- Player & Camera Systems ---
   const player = createPlayerController(labyrinth)
@@ -131,3 +110,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderer.setAnimationLoop(drawFrame)
 })
+
