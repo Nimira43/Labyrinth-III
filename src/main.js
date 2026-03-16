@@ -1,0 +1,133 @@
+// main.js
+import * as THREE from 'three'
+import './styles.css'
+
+import {
+  FOG_COLOUR,
+  BACKGROUND_COLOUR
+} from './config.js'
+
+import { createLabyrinth } from './labyrinth.js'
+import { createPlayerController } from './playerController.js'
+import { createCameraRig } from './cameraRig.js'
+import { buildWorld } from './worldBuilder.js'
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  // --- Renderer ---
+  const renderer = new THREE.WebGLRenderer({ antialias: true })
+  renderer.outputColorSpace = THREE.SRGBColorSpace
+  renderer.toneMapping = THREE.NoToneMapping
+
+  if ('useLegacyLights' in renderer) {
+    renderer.useLegacyLights = true
+  }
+
+  renderer.setSize(window.innerWidth, window.innerHeight)
+  document.body.appendChild(renderer.domElement)
+
+  // --- Scene ---
+  const scene = new THREE.Scene()
+  scene.background = new THREE.Color(BACKGROUND_COLOUR)
+  scene.fog = new THREE.FogExp2(FOG_COLOUR, 0.012)
+
+  // --- Camera ---
+  const aspect = window.innerWidth / window.innerHeight
+  const camera = new THREE.PerspectiveCamera(80, aspect)
+
+  // --- Starfield ---
+  const starGeometry = new THREE.BufferGeometry()
+  const starCount = 5000
+  const starPositions = new Float32Array(starCount * 3)
+
+  for (let i = 0; i < starCount * 3; i += 3) {
+    const radius = 1800
+    const theta = Math.random() * 2 * Math.PI
+    const phi = Math.acos(Math.random() * 2 - 1)
+
+    starPositions[i] = radius * Math.sin(phi) * Math.cos(theta)
+    starPositions[i + 1] = radius * Math.sin(phi) * Math.sin(theta)
+    starPositions[i + 2] = radius * Math.cos(phi)
+  }
+
+  starGeometry.setAttribute(
+    'position',
+    new THREE.BufferAttribute(starPositions, 3)
+  )
+
+  const starMaterial = new THREE.PointsMaterial({
+    color: '#ffffff',
+    size: 2.5,
+    sizeAttenuation: false,
+    transparent: true,
+    opacity: 0.5,
+    depthWrite: true,
+    fog: false
+  })
+
+  const starField = new THREE.Points(starGeometry, starMaterial)
+  starField.renderOrder = -9999
+  scene.add(starField)
+
+  // --- Labyrinth Data ---
+  const labyrinth = createLabyrinth()
+
+  // --- Build World ---
+  const world = buildWorld(labyrinth)
+  scene.add(world)
+
+  // --- Lights ---
+  scene.add(new THREE.AmbientLight('#ffe8d0', 0.35))
+  scene.add(new THREE.HemisphereLight('#ffe7b3', '#8b4a00', 0.9))
+
+  const keyLight = new THREE.DirectionalLight('#ffe7c2', 1.4)
+  keyLight.position.set(28, 25, 15)
+  keyLight.target.position.set(14, 0, 7)
+  scene.add(keyLight, keyLight.target)
+
+  const cornerIntensity = 1.8
+  const cornerDistance = 90
+  const cornerDecay = 2
+
+  const corners = [
+    [-28, 12, -15],
+    [ 28, 12, -15],
+    [ 28, 12,  15],
+    [-28, 12,  15]
+  ]
+
+  corners.forEach(([x, y, z]) => {
+    const light = new THREE.PointLight('#f8d1b0', cornerIntensity, cornerDistance, cornerDecay)
+    light.position.set(x, y, z)
+    scene.add(light)
+  })
+
+  const spotlight = new THREE.SpotLight('#ffffff', 3.2, 18, 0.55, 0.5, 2)
+  spotlight.target = new THREE.Object3D()
+  scene.add(spotlight, spotlight.target)
+
+  // --- Player & Camera Systems ---
+  const player = createPlayerController(labyrinth)
+  const cameraRig = createCameraRig(camera)
+
+  document.addEventListener('keydown', player.handleKeyDown)
+  document.addEventListener('keyup', player.handleKeyUp)
+
+  // --- Frame Loop ---
+  function drawFrame() {
+    starField.rotation.y += 0.0002
+
+    player.update()
+    cameraRig.update(player)
+
+    const { x, z } = player.getPosition()
+    const { cosDir, sinDir } = player.getDirection()
+
+    spotlight.position.set(x, 0, z)
+    spotlight.target.position.set(x + cosDir, -0.1, z + sinDir)
+
+    renderer.render(scene, camera)
+  }
+
+  renderer.setAnimationLoop(drawFrame)
+})
