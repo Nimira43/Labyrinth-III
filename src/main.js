@@ -13,8 +13,9 @@ import { createCameraRig } from './cameraRig.js'
 import { buildWorld } from './worldBuilder.js'
 import { createLights } from './lights.js'
 import { createMaterials } from './materials.js'
+import { createAudioSystem } from './audio.js'
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
 
   // --- Renderer ---
   const renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -85,8 +86,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const { group: lightsGroup, spotlight } = createLights()
   scene.add(lightsGroup)
 
+  // --- Audio System ---
+  const audio = createAudioSystem()
+
+  // Load audio files 
+  await audio.loadSound('ambience', '/audio/bg.mp3')
+  await audio.loadSound('step', '/audio/steps.mp3')
+  await audio.loadSound('jump', '/audio/jump.wav')
+
   // --- Player & Camera Systems ---
-  const player = createPlayerController(labyrinth)
+  const player = createPlayerController(labyrinth, audio)
   const cameraRig = createCameraRig(camera)
 
   document.addEventListener('keydown', player.handleKeyDown)
@@ -110,4 +119,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderer.setAnimationLoop(drawFrame)
 })
-

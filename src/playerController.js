@@ -1,4 +1,3 @@
-// playerController.js
 import {
   MOVE_SPEED,
   TURN_SPEED,
@@ -7,7 +6,7 @@ import {
   JUMP_AMPLITUDE
 } from './config.js'
 
-export function createPlayerController(labyrinth) {
+export function createPlayerController(labyrinth, audio) {
   let x = 1
   let z = 2
 
@@ -23,10 +22,18 @@ export function createPlayerController(labyrinth) {
   let jumpTime = -1000
 
   function handleKeyDown(event) {
-    if (event.code === 'Space') jumpTime = time
+    if (event.code === 'Space') {
+      jumpTime = time
+      audio.play('jump', 0.6)
+    }
+
+    if (event.code === 'ArrowUp') {
+      isMovingForward = true
+      audio.play('step', 0.2)
+    }
+
     if (event.code === 'ArrowLeft') isTurningLeft = true
     if (event.code === 'ArrowRight') isTurningRight = true
-    if (event.code === 'ArrowUp') isMovingForward = true
   }
 
   function handleKeyUp(event) {
