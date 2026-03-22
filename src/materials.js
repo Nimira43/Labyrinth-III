@@ -4,7 +4,7 @@ import * as THREE from 'three'
 export function createMaterials() {
   return {
     wall: new THREE.MeshPhongMaterial({
-      color: '#d73e06',
+      color: '#932d08',
       shininess: 10
     }),
 

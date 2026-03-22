@@ -14,6 +14,7 @@ import { buildWorld } from './worldBuilder.js'
 import { createLights } from './lights.js'
 import { createMaterials } from './materials.js'
 import { createAudioSystem } from './audio.js'
+import { createPostProcessing } from './postprocessing.js'
 
 document.addEventListener('DOMContentLoaded', async () => {
 
@@ -37,6 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // --- Camera ---
   const aspect = window.innerWidth / window.innerHeight
   const camera = new THREE.PerspectiveCamera(80, aspect)
+  const { composer, grainPass } = createPostProcessing(renderer, scene, camera)
 
   // --- Starfield ---
   const starGeometry = new THREE.BufferGeometry()
@@ -114,7 +116,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     spotlight.position.set(x, 0, z)
     spotlight.target.position.set(x + cosDir, -0.1, z + sinDir)
 
-    renderer.render(scene, camera)
+    grainPass.uniforms.time.value = performance.now() /1000
+    composer.render()
+
   }
 
   renderer.setAnimationLoop(drawFrame)
