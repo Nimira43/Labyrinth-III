@@ -18,6 +18,7 @@ import { createPostProcessing } from './postprocessing.js'
 import { createBroadcastPhantom } from './phantom.js'
 
 document.addEventListener('DOMContentLoaded', async () => {
+  let smoothProximity = 0
 
   // --- Renderer ---
   const renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -41,7 +42,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const aspect = window.innerWidth / window.innerHeight
   const camera = new THREE.PerspectiveCamera(80, aspect)
 
-  // Grab all the passes you need
   const {
     composer,
     grainPass,
@@ -119,34 +119,35 @@ document.addEventListener('DOMContentLoaded', async () => {
   // --- Frame Loop ---
   function drawFrame() {
     starField.rotation.y += 0.0002
-
     player.update()
     cameraRig.update(player)
-    phantom.update(camera, performance.now() / 1000)
+    phantom.update(camera, performance.now() / 1000, player.getPosition())
 
     // --- Phantom Proximity Distortion ---
     const phantomPos = phantom.position
     const playerPos = player.getPosition()
-
     const dx = phantomPos.x - playerPos.x
     const dz = phantomPos.z - playerPos.z
     const distance = Math.sqrt(dx * dx + dz * dz)
 
     // 0 = far, 1 = very close
-    const proximity = 1.0 - Math.min(distance / 8.0, 1.0)
+    // Eased and smooth proximity
+    let proximity = 1.0 - Math.min(distance / 8.0, 1.0)
+
+    // Ease-in curve (softens the start)
+    proximity = Math.pow(proximity, 2.5)
+
+    // Smooth over time (removes popping)
+    smoothProximity = THREE.MathUtils.lerp(smoothProximity, proximity, 0.05)
+
+    // Fog uses smoothed proximity
+    const targetFog = baseFogDensity + smoothProximity * 0.02
+    scene.fog.density = THREE.MathUtils.lerp(scene.fog.density, targetFog, 0.02)
 
     // Fog thickens
-    scene.fog.density = baseFogDensity + proximity * 0.02
-
-    // Chromatic aberration intensifies
-    aberrationPass.uniforms.amount.value = 0.001 + proximity * 0.01
-
-    // Vignette darkens
-    vignettePass.uniforms.darkness.value = 1.1 + proximity * 1.5
-
-    // Scanlines intensify
-    scanlinePass.uniforms.intensity.value = 0.15 + proximity * 0.3
-
+    aberrationPass.uniforms.amount.value = 0.001 + smoothProximity * 0.01
+    vignettePass.uniforms.darkness.value = 1.1 + smoothProximity * 1.5
+    scanlinePass.uniforms.intensity.value = 0.15 + smoothProximity * 0.3
     // Grain animates
     grainPass.uniforms.time.value = performance.now() / 1000
 
@@ -155,9 +156,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     spotlight.position.set(x, 0, z)
     spotlight.target.position.set(x + cosDir, -0.1, z + sinDir)
-
     composer.render()
   }
-
   renderer.setAnimationLoop(drawFrame)
 })
