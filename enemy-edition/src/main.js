@@ -4,7 +4,9 @@ import './styles.css'
 
 import {
   FOG_COLOUR,
-  BACKGROUND_COLOUR
+  BACKGROUND_COLOUR,
+  LABYRINTH_WIDTH,
+  LABYRINTH_HEIGHT
 } from './config.js'
 
 import { createLabyrinth } from './labyrinth.js'
@@ -12,7 +14,7 @@ import { createPlayerController } from './playerController.js'
 import { createCameraRig } from './cameraRig.js'
 import { buildWorld } from './worldBuilder.js'
 import { createLights } from './lights.js'
-import { createMaterials } from './materials.js' 
+import { createMaterials } from './materials.js'
 import { createAudioSystem } from './audio.js'
 import { createPostProcessing } from './postprocessing.js'
 import { createBroadcastPhantom } from './phantom.js'
@@ -94,6 +96,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const world = buildWorld(labyrinth, materials)
   scene.add(world)
 
+  // --- Goal Position (matches worldBuilder.js) ---
+  const goalPos = new THREE.Vector3(
+    2 * LABYRINTH_WIDTH - 3,
+    1.5,
+    2 * LABYRINTH_HEIGHT
+  )
+
   // --- Phantom ---
   const phantom = createBroadcastPhantom()
   phantom.position.set(5, 1.1, 5)
@@ -113,8 +122,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   const player = createPlayerController(labyrinth, audio)
   const cameraRig = createCameraRig(camera)
 
+  // --- Health + Tablets ---
+  player.health = 100
+  player.tablets = 10
+
+  function updateHealthUI() {
+    const el = document.getElementById('health-fill')
+    if (el) el.style.width = `${player.health}%`
+  }
+
+  function updateTabletUI() {
+    const el = document.getElementById('tablets')
+    if (el) el.textContent = `Tablets: ${player.tablets}`
+  }
+
+  updateHealthUI()
+  updateTabletUI()
+
+  // Movement controls
   document.addEventListener('keydown', player.handleKeyDown)
   document.addEventListener('keyup', player.handleKeyUp)
+
+  // --- Tablet Usage (E key) ---
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'e' && player.tablets > 0 && player.health < 75) {
+      player.tablets--
+
+      const healAmount = 25 + Math.random() * 15 // 25–40%
+      player.health = Math.min(player.health + healAmount, 100)
+
+      updateTabletUI()
+      updateHealthUI()
+    }
+  })
 
   // --- Frame Loop ---
   function drawFrame() {
@@ -123,32 +163,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     cameraRig.update(player)
     phantom.update(camera, performance.now() / 1000, player.getPosition())
 
-    // --- Phantom Proximity Distortion ---
+    // --- Phantom Proximity ---
     const phantomPos = phantom.position
     const playerPos = player.getPosition()
     const dx = phantomPos.x - playerPos.x
     const dz = phantomPos.z - playerPos.z
     const distance = Math.sqrt(dx * dx + dz * dz)
+    
+    // --- TEMPORARY TEST ATTACK ---
+    if (distance < 3) {   // Phantom very close
+      player.health -= 0.3   // slow drain so you can see it
+      if (player.health < 0) player.health = 0
+      updateHealthUI()
+    }
 
-    // 0 = far, 1 = very close
-    // Eased and smooth proximity
     let proximity = 1.0 - Math.min(distance / 8.0, 1.0)
-
-    // Ease-in curve (softens the start)
     proximity = Math.pow(proximity, 2.5)
-
-    // Smooth over time (removes popping)
     smoothProximity = THREE.MathUtils.lerp(smoothProximity, proximity, 0.05)
 
-    // Fog uses smoothed proximity
-    const targetFog = baseFogDensity + smoothProximity * 0.02
-    scene.fog.density = THREE.MathUtils.lerp(scene.fog.density, targetFog, 0.02)
+    // --- Goal Proximity Fog Aggression ---
+    const gx = goalPos.x - playerPos.x
+    const gz = goalPos.z - playerPos.z
+    const goalDistance = Math.sqrt(gx * gx + gz * gz)
 
-    // Fog thickens
+    const goalProximity = Math.pow(
+      1.0 - Math.min(goalDistance / 12.0, 1.0),
+      2.5
+    )
+
+    const fogAggression = smoothProximity + goalProximity * 1.5
+    const targetFog = baseFogDensity + fogAggression * 0.03
+
+    scene.fog.density = THREE.MathUtils.lerp(scene.fog.density, targetFog, 0.1)
+
+    // --- Postprocessing ---
     aberrationPass.uniforms.amount.value = 0.001 + smoothProximity * 0.01
     vignettePass.uniforms.darkness.value = 1.1 + smoothProximity * 1.5
     scanlinePass.uniforms.intensity.value = 0.15 + smoothProximity * 0.3
-    // Grain animates
     grainPass.uniforms.time.value = performance.now() / 1000
 
     const { x, z } = player.getPosition()
@@ -156,7 +207,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     spotlight.position.set(x, 0, z)
     spotlight.target.position.set(x + cosDir, -0.1, z + sinDir)
+
     composer.render()
   }
+
   renderer.setAnimationLoop(drawFrame)
 })

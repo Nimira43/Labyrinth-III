@@ -3,7 +3,8 @@ import * as THREE from 'three'
 
 export function createBroadcastPhantom() {
   // --- Geometry (tall, stretched humanoid silhouette) ---
-  const geometry = new THREE.PlaneGeometry(0.6, 2.2)
+  const geometry = new THREE.PlaneGeometry(0.6, 2.2, 32, 32)
+
   // --- Shader Material ---
   const material = new THREE.ShaderMaterial({
     transparent: true,
@@ -34,6 +35,7 @@ export function createBroadcastPhantom() {
       float rand(vec2 co){
         return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
       }
+      
 
       void main() {
         // Noise flicker
@@ -44,6 +46,9 @@ export function createBroadcastPhantom() {
 
         // Vertical fade (legs taper)
         float fade = smoothstep(0.0, 0.2, vUv.y);
+        // Radial edge fade (curved silhouette)
+        float dist = distance(vUv, vec2(0.5));
+        float edgeFade = smoothstep(0.4, 0.7, dist);
 
         // Base darkness
         float base = fade * 0.4 + noise + scan;
@@ -54,11 +59,13 @@ export function createBroadcastPhantom() {
         float b = base - chromaOffset;
 
         // Dark silhouette
-        float fogBoost = smoothstep(0.4, 1.0, fadeAlpha); 
-        vec3 color = vec3(r, g, b) * (0.6 + fogBoost * 0.4);
+        float fogBoost = smoothstep(0.0, 0.7, fadeAlpha);
+        vec3 color = vec3(r, g, b) * (0.6 + fogBoost * 0.5);
 
         // Alpha controls visibility
-        float alpha = fade * 0.9 * fadeAlpha;
+        float alpha = fade * 0.9 * fadeAlpha * (1.0 - edgeFade);
+        float shimmer = sin(vUv.y * 40.0 + time * 5.0) * 0.02;
+        alpha += shimmer;
         gl_FragColor = vec4(color, alpha);
       }
     `
@@ -81,7 +88,7 @@ export function createBroadcastPhantom() {
     const camForward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion)
     const dot = camForward.dot(toPhantom)
 
-    const lookingAtPhantom = dot > 0.55
+    const lookingAtPhantom = dot > 0.75
 
     // Fade logic
     const targetAlpha = lookingAtPhantom ? 0.0 : 1.0
@@ -101,11 +108,11 @@ export function createBroadcastPhantom() {
       this.position.z -= dz * pull
     }
 
-    const desiredDist = 6.0
+    const desiredDist = 4.5
 
     // --- Lock-on Logic ---
     if (!lookingAtPhantom && distance < 10) {
-      this.lockOn += 0.003
+      this.lockOn += 0.006
     } else {
       this.lockOn -= 0.01
     }
@@ -187,8 +194,8 @@ export function createBroadcastPhantom() {
         playerPos.z - phantomPos.z
       ).normalize()
 
-      this.position.x += dirIn.x * 0.006
-      this.position.z += dirIn.z * 0.006
+      this.position.x += dirIn.x * 0.012
+      this.position.z += dirIn.z * 0.012
     }
 
     // Orbit drift
