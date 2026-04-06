@@ -21,7 +21,14 @@ export function createPlayerController(labyrinth, audio) {
   let time = 0
   let jumpTime = -1000
 
+  // --- NEW: controller object ---
+  const controller = {
+    freeze: false
+  }
+
   function handleKeyDown(event) {
+    if (controller.freeze) return
+
     if (event.code === 'Space') {
       jumpTime = time
       audio.play('jump', 0.6)
@@ -37,6 +44,8 @@ export function createPlayerController(labyrinth, audio) {
   }
 
   function handleKeyUp(event) {
+    if (controller.freeze) return
+
     if (event.code === 'ArrowLeft') isTurningLeft = false
     if (event.code === 'ArrowRight') isTurningRight = false
     if (event.code === 'ArrowUp') isMovingForward = false
@@ -52,6 +61,8 @@ export function createPlayerController(labyrinth, audio) {
   }
 
   function update() {
+    if (controller.freeze) return   // <--- FREEZE WORKS NOW
+
     time++
 
     if (isTurningLeft) direction -= TURN_SPEED
@@ -86,12 +97,13 @@ export function createPlayerController(labyrinth, audio) {
     return 0
   }
 
-  return {
-    update,
-    handleKeyDown,
-    handleKeyUp,
-    getPosition: () => ({ x, z }),
-    getDirection: () => ({ direction, cosDir, sinDir }),
-    getJumpHeight
-  }
+  // --- RETURN UPDATED CONTROLLER ---
+  controller.update = update
+  controller.handleKeyDown = handleKeyDown
+  controller.handleKeyUp = handleKeyUp
+  controller.getPosition = () => ({ x, z })
+  controller.getDirection = () => ({ direction, cosDir, sinDir })
+  controller.getJumpHeight = getJumpHeight
+
+  return controller
 }

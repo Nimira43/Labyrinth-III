@@ -1,13 +1,30 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="./images/TheFavicon.png">
-    <title>Labyrinth III</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./images/TheFavicon.png">
+  <title>Labyrinth III</title>
+</head>
+<body>
+  <div id="app">
+    <div id="tablet-hud">
+      <div id="tablets">Tablets: 0</div>
+    </div>
+
+    <div id="health-hud">
+      <div id="health-bar"><div id="health-fill"></div></div>
+    </div>
+  </div>
+  <div id="gameover" class="overlay hidden">
+    Game Over<br>The Phantom has claimed you.<br><br>
+    <button id="restart-btn">Restart</button>
+  </div>
+
+  
+  <div id="victory" class="overlay hidden">
+    You Escaped The Labyrinth
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
 </html>

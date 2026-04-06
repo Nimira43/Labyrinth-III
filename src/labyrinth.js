@@ -32,7 +32,6 @@ export function generateLabyrinthGrid() {
     currentY += 2
   }
 
-  // --- original logic, but scoped inside this function ---
   for (let x = 0; x < 2 * width; x++) {
     labyrinth[x] = []
     for (let y = 0; y < 2 * height; y++) {

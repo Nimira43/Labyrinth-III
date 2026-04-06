@@ -1,4 +1,3 @@
-// materials.js
 import * as THREE from 'three'
 
 export function createMaterials() {

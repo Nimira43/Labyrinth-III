@@ -19,24 +19,26 @@ The maze breathes.
 - Smooth first‑person movement  
 - Starfield skybox  
 - Modular architecture for easy expansion  
+- Win and loss conditions (golden sphere escape / Phantom claim)
+- Restart system on death
 
 ## 🎛 Post‑Processing Stack
 
-Labyrinth III uses a custom post‑processing pipeline:
+Labyrinth III uses a custom post‑processing pipeline to achieve its “broadcast from the void” aesthetic:
 
-- **Bloom** (soft cosmic glow)  
 - **Vignette** (analogue depth)  
 - **Chromatic Aberration** (broadcast drift)  
 - **Film Grain** (noise texture)  
 - **CRT Scanlines** (retro monitor effect)
+- **Bloom (optional / configurable)** — cosmic glow
 
-These combine to create the signature “broadcast from the void” aesthetic.
+These effects combine to create a surreal, haunted‑signal atmosphere.
 
 ## 🎮 Controls
 
 - **Arrow Keys** — Move  
 - **Space** — Jump  
-- **Mouse** — Look around  
+- **E** — Use tablet (heals 25–40%)
 
 ## 🔧 Project Structure
 
@@ -57,12 +59,14 @@ styles.css
 
 Everything is modular and easy to extend.
 
-## 🔮 Planned Features
+## 🧩 Gameplay Loop
 
-- **Broadcast Phantom** — a humanoid made of scanlines and noise  
-- **Living Labyrinth** — walls shift behind the player  
-- Additional audio layers  
-- Environmental storytelling  
+- Navigate the labyrinth
+- Avoid the Broadcast Phantom
+- Manage health using limited tablets
+- Reach the golden sphere to escape
+- If the Phantom drains your health to zero, the fog consumes you
+- A restart option appears on death
 
 ## 🛠 Installation
 

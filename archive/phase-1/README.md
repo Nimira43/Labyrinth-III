@@ -60,6 +60,7 @@ Everything is modular and easy to extend.
 ## 🔮 Planned Features
 
 - **Broadcast Phantom** — a humanoid made of scanlines and noise  
+- **Living Labyrinth** — walls shift behind the player  
 - Additional audio layers  
 - Environmental storytelling  
 

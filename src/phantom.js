@@ -36,7 +36,6 @@ export function createBroadcastPhantom() {
         return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
       }
       
-
       void main() {
         // Noise flicker
         float noise = rand(vUv * time * 18.0) * noiseIntensity;
@@ -161,7 +160,7 @@ export function createBroadcastPhantom() {
     if (this.manifestCooldown > 0) {
       this.manifestCooldown--
     }
-                                                                                                                      
+                                                                                                               
     // --- Signal Drain
     if (!lookingAtPhantom && this.manifestCooldown > 0) {
       this.drain += 0.002

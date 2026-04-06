@@ -1,4 +1,3 @@
-// cameraRig.js
 import {
   CAMERA_LOOK_AHEAD,
   CAMERA_HEIGHT_MULTIPLIER

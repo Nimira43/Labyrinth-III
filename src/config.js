@@ -1,4 +1,3 @@
-// config.js
 export const LABYRINTH_WIDTH = 28
 export const LABYRINTH_HEIGHT = 15
 

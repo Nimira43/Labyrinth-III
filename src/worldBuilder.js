@@ -1,4 +1,3 @@
-// worldBuilder.js
 import * as THREE from 'three'
 import {
   LABYRINTH_WIDTH,

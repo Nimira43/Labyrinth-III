@@ -1,31 +1,23 @@
-import {
-  EffectComposer
-} from 'three/examples/jsm/postprocessing/EffectComposer.js'
-import {
-  RenderPass
-} from 'three/examples/jsm/postprocessing/RenderPass.js'
-import {
-  ShaderPass
-} from 'three/examples/jsm/postprocessing/ShaderPass.js'
-import {
-  UnrealBloomPass
-} from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
 import * as THREE from 'three'
 
 export function createPostProcessing(renderer, scene, camera) {
   const composer = new EffectComposer(renderer)
   composer.addPass(new RenderPass(scene, camera))
 
-  // --- BLOOM ---
+  // --- Bloom ---
   const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.3,   // strength
-    0.25,   // radius
-    0.0    // threshold
+    0.3,
+    0.25,
+    0.0
   )
   composer.addPass(bloomPass)
 
-  // --- VIGNETTE ---
+  // --- Vignette ---
   const vignetteShader = {
     uniforms: {
       tDiffuse: { value: null },
@@ -54,13 +46,14 @@ export function createPostProcessing(renderer, scene, camera) {
       }
     `
   }
-  composer.addPass(new ShaderPass(vignetteShader))
+  const vignettePass = new ShaderPass(vignetteShader)
+  composer.addPass(vignettePass)
 
-  // --- CHROMATIC ABERRATION ---
+  // --- Chromatic Aberration ---
   const aberrationShader = {
     uniforms: {
       tDiffuse: { value: null },
-      amount: { value: 0.001 } // softer
+      amount: { value: 0.001 }
     },
     vertexShader: `
       varying vec2 vUv;
@@ -85,9 +78,10 @@ export function createPostProcessing(renderer, scene, camera) {
       }
     `
   }
-  composer.addPass(new ShaderPass(aberrationShader))
+  const aberrationPass = new ShaderPass(aberrationShader)
+  composer.addPass(aberrationPass)
 
-  // --- FILM GRAIN ---
+  // --- Film Grain ---
   const grainShader = {
     uniforms: {
       tDiffuse: { value: null },
@@ -116,17 +110,16 @@ export function createPostProcessing(renderer, scene, camera) {
       }
     `
   }
-
   const grainPass = new ShaderPass(grainShader)
   composer.addPass(grainPass)
 
-  // --- CRT SCANLINES ---
+  // --- CRT Scanlines ---
   const scanlineShader = {
     uniforms: {
       tDiffuse: { value: null },
       time: { value: 0.0 },
-      intensity: { value: 0.15 },   // how visible the lines are
-      scanlineCount: { value: 800.0 } // number of horizontal lines
+      intensity: { value: 0.15 },
+      scanlineCount: { value: 800.0 }
     },
     vertexShader: `
       varying vec2 vUv;
@@ -144,26 +137,20 @@ export function createPostProcessing(renderer, scene, camera) {
 
       void main() {
         vec4 texel = texture2D(tDiffuse, vUv);
-
-        // Horizontal scanlines
         float line = sin(vUv.y * scanlineCount) * 0.5 + 0.5;
-
-        // Mix scanlines with the scene
         texel.rgb *= mix(1.0, line, intensity);
-
         gl_FragColor = texel;
       }
     `
   }
-
   const scanlinePass = new ShaderPass(scanlineShader)
   composer.addPass(scanlinePass)
-
 
   return {
     composer,
     grainPass,
+    vignettePass,
+    aberrationPass,
     scanlinePass
   }
 }
-

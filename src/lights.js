@@ -1,4 +1,3 @@
-// lights.js
 import * as THREE from 'three'
 import { LABYRINTH_WIDTH, LABYRINTH_HEIGHT } from './config.js'
 

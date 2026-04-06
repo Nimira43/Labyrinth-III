@@ -1,4 +1,3 @@
-// audio.js
 export function createAudioSystem() {
   const audioContext = new (window.AudioContext || window.webkitAudioContext)()
 
@@ -11,14 +10,12 @@ export function createAudioSystem() {
       await audioContext.resume()
       unlocked = true
 
-      // Start ambience immediately after unlock
       if (sounds['ambience']) {
         playAmbience('ambience', 0.4)
       }
     }
   }
 
-  // Unlock on any user gesture
   window.addEventListener('keydown', unlockAndStartAmbience, { once: true })
   window.addEventListener('mousedown', unlockAndStartAmbience, { once: true })
   window.addEventListener('touchstart', unlockAndStartAmbience, { once: true })
