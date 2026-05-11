@@ -159,8 +159,8 @@ export function createBroadcastPhantom() {
 
     if (this.manifestCooldown > 0) {
       this.manifestCooldown--
-    }
-                                                                                                               
+    }       
+    
     // --- Signal Drain
     if (!lookingAtPhantom && this.manifestCooldown > 0) {
       this.drain += 0.002

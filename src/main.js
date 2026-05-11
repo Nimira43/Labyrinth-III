@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   let victory = false
   let smoothProximity = 0
 
-  // --- Renderer ---
   const renderer = new THREE.WebGLRenderer({ antialias: true })
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.NoToneMapping
@@ -35,13 +34,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderer.setSize(window.innerWidth, window.innerHeight)
   document.body.appendChild(renderer.domElement)
 
-  // --- Scene ---
   const scene = new THREE.Scene()
   scene.background = new THREE.Color(BACKGROUND_COLOUR)
   scene.fog = new THREE.FogExp2(FOG_COLOUR, 0.012)
   const baseFogDensity = 0.012
-
-  // --- Camera ---
   const aspect = window.innerWidth / window.innerHeight
   const camera = new THREE.PerspectiveCamera(80, aspect)
 
@@ -53,7 +49,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     scanlinePass
   } = createPostProcessing(renderer, scene, camera)
 
-  // --- Starfield ---
   const starGeometry = new THREE.BufferGeometry()
   const starCount = 5000
   const starPositions = new Float32Array(starCount * 3)
@@ -87,43 +82,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   starField.renderOrder = -9999
   scene.add(starField)
 
-  // --- Labyrinth Data ---
   const labyrinth = createLabyrinth()
-
-  // --- Materials ---
   const materials = createMaterials()
-
-  // --- Build World ---
   const world = buildWorld(labyrinth, materials)
   scene.add(world)
 
-  // --- Goal Position (matches worldBuilder.js) ---
   const goalPos = new THREE.Vector3(
     2 * LABYRINTH_WIDTH - 3,
     1.5,
     2 * LABYRINTH_HEIGHT
   )
 
-  // --- Phantom ---
   const phantom = createBroadcastPhantom()
   phantom.position.set(5, 1.1, 5)
   scene.add(phantom)
 
-  // --- Lights ---
   const { group: lightsGroup, spotlight } = createLights()
   scene.add(lightsGroup)
 
-  // --- Audio System ---
   const audio = createAudioSystem()
   await audio.loadSound('ambience', '/audio/bg.mp3')
   await audio.loadSound('step', '/audio/steps.mp3')
   await audio.loadSound('jump', '/audio/jump.wav')
 
-  // --- Player & Camera Systems ---
   const player = createPlayerController(labyrinth, audio)
   const cameraRig = createCameraRig(camera)
 
-  // --- Health + Tablets ---
   player.health = 100
   player.tablets = 10
 
@@ -140,11 +124,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateHealthUI()
   updateTabletUI()
 
-  // Movement controls
   document.addEventListener('keydown', player.handleKeyDown)
   document.addEventListener('keyup', player.handleKeyUp)
-
-  // --- Tablet Usage (E key) ---
   document.addEventListener('keydown', (e) => {
     if (e.key === 'e' && player.tablets > 0 && player.health < 75) {
       player.tablets--
@@ -161,11 +142,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (gameOver) return
     gameOver = true
 
-    // Freeze movement
     player.freeze = true
     phantom.freeze = true
 
-    // Show overlay
     const el = document.getElementById('gameover')
     el.classList.remove('hidden')
     setTimeout(() => el.classList.add('show'), 50)
@@ -175,17 +154,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (victory) return
     victory = true
 
-    // Freeze movement
     player.freeze = true
     phantom.freeze = true
 
-    // Show overlay
     const el = document.getElementById('victory')
     el.classList.remove('hidden')
     setTimeout(() => el.classList.add('show'), 50)
   }
 
-  // --- Restart Button ---
   const restartBtn = document.getElementById('restart-btn')
   if (restartBtn) {
     restartBtn.addEventListener('click', () => {
@@ -193,14 +169,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     })
   }
 
-  // --- Frame Loop ---
   function drawFrame() {
     starField.rotation.y += 0.0002
     player.update()
     cameraRig.update(player)
     phantom.update(camera, performance.now() / 1000, player.getPosition())
 
-    // --- Phantom Proximity ---
     const phantomPos = phantom.position
     const playerPos = player.getPosition()
     const dx = phantomPos.x - playerPos.x
@@ -221,7 +195,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     proximity = Math.pow(proximity, 2.5)
     smoothProximity = THREE.MathUtils.lerp(smoothProximity, proximity, 0.05)
 
-    // --- Goal Proximity Fog Aggression ---
     const gx = goalPos.x - playerPos.x
     const gz = goalPos.z - playerPos.z
     const goalDistance = Math.sqrt(gx * gx + gz * gz)
@@ -240,7 +213,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     scene.fog.density = THREE.MathUtils.lerp(scene.fog.density, targetFog, 0.1)
 
-    // --- Postprocessing ---
     aberrationPass.uniforms.amount.value = 0.001 + smoothProximity * 0.01
     vignettePass.uniforms.darkness.value = 1.1 + smoothProximity * 1.5
     scanlinePass.uniforms.intensity.value = 0.15 + smoothProximity * 0.3

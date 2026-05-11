@@ -3,7 +3,6 @@ import { LABYRINTH_WIDTH, LABYRINTH_HEIGHT } from './config.js'
 export function generateLabyrinthGrid() {
   const width = LABYRINTH_WIDTH
   const height = LABYRINTH_HEIGHT
-
   const labyrinth = []
   const left = []
   const right = []

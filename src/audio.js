@@ -37,7 +37,6 @@ export function createAudioSystem() {
 
     source.buffer = buffer
     gain.gain.value = volume
-
     source.connect(gain).connect(audioContext.destination)
     source.start()
   }
@@ -55,7 +54,6 @@ export function createAudioSystem() {
     source.buffer = buffer
     source.loop = true
     gain.gain.value = volume
-
     source.connect(gain).connect(audioContext.destination)
     source.start()
 
